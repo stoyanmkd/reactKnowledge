@@ -1,7 +1,29 @@
-module.exports = {
-    entry: ['./app/index.js'],
+const path = require('path');
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const validate = require('webpack-validator');
+
+const PATHS = {
+    app: path.join(__dirname, 'app/index.js'),
+    indexHtmlTemplate: path.join(__dirname, 'app/index.html'),
+    images: path.join(__dirname, 'app/assets/img'),
+    style: [
+        path.join(__dirname, 'node_modules/bootstrap/dist/css', 'bootstrap.min.css'),
+        path.join(__dirname, 'app/assets/css', 'main.css')
+    ],
+
+    build: path.join(__dirname, 'build')
+};
+
+var config = {
+    entry: {
+        app: PATHS.app,
+        style: PATHS.style
+    },
     output: {
-        filename: "bundle.js"
+        path: PATHS.build,
+        filename: '[name].js',
+        publicPath: '/'
     },
     module: {
         preLoaders: [
@@ -27,15 +49,50 @@ module.exports = {
                     cacheDirectory: true,
                     presets: ['react', 'es2015']
                 }
+            },
+
+                //CSS
+            {
+                test: /\.css$/,
+                    loaders: ['style', 'css'],
+                include: PATHS.style
+            },
+
+            // Fonts
+            {
+                test: /\.(ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
+                    loader: 'file-loader'
+            },
+
+            // Images
+            {
+                test: /\.(jpg|png)$/,
+                    loader: 'file?name=[path][name].[hash].[ext]',
+                include: PATHS.images
             }
         ]
     },
+    plugins: [
+        // Generate index.html automatically
+        new HtmlWebpackPlugin({
+            template: PATHS.indexHtmlTemplate,
+            title: 'IPT Knowledge Tester'
+        }),
+
+        // Enable multi-pass compilation for enhanced performance
+        // in larger projects. Good default.
+        new webpack.HotModuleReplacementPlugin({
+            multiStep: true
+        })
+    ],
     watch: true,
     resolve: {
         extensions: ['', '.js', '.jsx']
     },
     devtool: 'eval-source-map',
     devServer: {
+        // Publick path folder content will be served from
+        publicPath: "/",
         // Enable history API fallback so HTML5 History API based
         // routing works. This is a good default that will come
         // in handy in more complicated setups.
@@ -61,3 +118,5 @@ module.exports = {
         }
     }
 };
+
+module.exports = validate(config);
